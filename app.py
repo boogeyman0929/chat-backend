@@ -5,26 +5,25 @@ import time
 import os
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey123"  # keep sessions secure
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")  # allow connections from frontend
+app.secret_key = "supersecretkey123"
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
 # ----------------------------
 # in-memory storage
 # ----------------------------
-ACTIVE_KEYS = {"MYSECRETKEY"}  # unlimited-use keys
+ACTIVE_KEYS = {"MYSECRETKEY"}  # valid keys
 USERS = {}  # username -> {"sid": socket_id, "role": "user"}
-CHANNELS = {"general": []}  # channel_name -> list of messages
+CHANNELS = {"general": []}  # channel_name -> messages list
 
 # ----------------------------
-# utility functions
+# utility: auto-clear channels
 # ----------------------------
 def clear_all_channels():
-    """Clears messages in all channels every 30 minutes."""
     while True:
-        time.sleep(1800)  # 30 minutes
-        for channel in CHANNELS:
-            CHANNELS[channel] = []
-        print("[*] All channels cleared.")
+        time.sleep(1800)  # 30 mins
+        for c in CHANNELS:
+            CHANNELS[c] = []
+        print("[*] all channels cleared.")
 
 threading.Thread(target=clear_all_channels, daemon=True).start()
 
@@ -44,15 +43,15 @@ def index():
         username = request.form.get("username", "").strip()
 
         if not validate_key(key):
-            return "Invalid key!", 403
+            return "invalid key", 403
         if username_taken(username):
-            return "Username already taken!", 403
+            return "username already taken", 403
 
         session["username"] = username
         USERS[username] = {"sid": None, "role": "user"}
         return redirect(url_for("chat"))
 
-    return render_template("login.html")  # frontend will have login form
+    return render_template("login.html")
 
 @app.route("/chat")
 def chat():
@@ -115,6 +114,6 @@ def handle_disconnect():
 # run app
 # ----------------------------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # railway sets PORT automatically
+    port = int(os.environ.get("PORT", 5000))
     print(f"[*] Starting chat server on port {port}...")
-    socketio.run(app, host="0.0.0.0", port=port, debug=False, allow_unsafe_werkzeug=True)
+    socketio.run(app, host="0.0.0.0", port=port)
