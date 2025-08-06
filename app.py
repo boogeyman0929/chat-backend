@@ -6,9 +6,7 @@ import os
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey123"  # keep sessions secure
-
-# switched async_mode to "threading"
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")  # allow connections from frontend
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")  # allow connections from frontend
 
 # ----------------------------
 # in-memory storage
@@ -119,4 +117,4 @@ def handle_disconnect():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # railway sets PORT automatically
     print(f"[*] Starting chat server on port {port}...")
-    socketio.run(app, host="0.0.0.0", port=port, debug=False)
+    socketio.run(app, host="0.0.0.0", port=port, debug=False, allow_unsafe_werkzeug=True)
