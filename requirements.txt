@@ -1,4 +1,4 @@
 Flask==2.2.5
 Flask-SocketIO==5.3.5
-python-socketio==5.9.2
+python-socketio==5.8.0
 eventlet==0.33.3
