@@ -6,7 +6,9 @@ import os
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey123"  # keep sessions secure
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")  # allow connections from frontend
+
+# switched async_mode to "threading"
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")  # allow connections from frontend
 
 # ----------------------------
 # in-memory storage
