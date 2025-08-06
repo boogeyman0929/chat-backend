@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Room</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0e0c1c, #1f1139);
+      color: white;
+      overflow: hidden;
+    }
+    .centered {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .input-box {
+      background: linear-gradient(135deg, #0e0c1c, #1f1139);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(155, 89, 182, 0.4);
+      animation: fadeIn 1s ease-in-out;
+    }
+    input[type="text"] {
+      width: 250px;
+      padding: 12px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 8px;
+      background-color: #2d1d50;
+      color: white;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #6f42c1;
+      border: none;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      box-shadow: 0 0 10px #8e44ad;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: scale(0.95);}
+      to {opacity: 1; transform: scale(1);}
+    }
+    #chatUI {
+      display: flex;
+      height: 100vh;
+    }
+    #sidebar {
+      width: 250px;
+      background: linear-gradient(to bottom, #1b1230, #2e204d);
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    #sidebar h2 {
+      margin-top: 0;
+      color: #bb86fc;
+    }
+    #usersList {
+      margin-top: 20px;
+    }
+    #usersList .user {
+      margin: 10px 0;
+      padding: 6px;
+      background: #321e53;
+      border-radius: 6px;
+      color: #cfa0ff;
+    }
+    #mainChat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 10px;
+      margin-bottom: 20px;
+    }
+    #messageInput {
+      display: flex;
+    }
+    #messageInput input {
+      flex: 1;
+      padding: 12px;
+      border-radius: 8px 0 0 8px;
+      border: none;
+      background: #2d1d50;
+      color: white;
+    }
+    #messageInput button {
+      border-radius: 0 8px 8px 0;
+    }
+    #preferences {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: #2d1d50;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+    #adminPanel {
+      display: none;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #2d1d50;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(255,255,255,0.3);
+    }
+  </style>
+</head>
+<body>
+<div id="loginScreen" class="centered">
+  <div class="input-box">
+    <h2>Enter Unique Key & Username</h2>
+    <input type="text" id="key" placeholder="Unique Key">
+    <br>
+    <input type="text" id="username" placeholder="Username">
+    <br>
+    <button onclick="enterChat()">Enter Chat</button>
+  </div>
+</div>
+
+<div id="chatUI" style="display:none">
+  <div id="sidebar">
+    <h2>Chat Room</h2>
+    <div id="usersOnline">Online Users: <span id="userCount">0</span></div>
+    <div id="usersList"></div>
+  </div>
+  <div id="mainChat">
+    <div id="messages"></div>
+    <div id="messageInput">
+      <input type="text" id="message" placeholder="Type your message...">
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+  <div id="adminPanel">
+    <strong>Admin Panel</strong><br>
+    <button onclick="alert('Ban User clicked')">Ban User</button>
+    <button onclick="alert('Kick User clicked')">Kick User</button>
+    <button onclick="alert('Timeout User clicked')">Timeout User</button>
+    <button onclick="alert('Give Role clicked')">Give Role</button>
+  </div>
+</div>
+
+<div id="preferences">Preferences: Dark/Light (not implemented)</div>
+
+<script>
+  const VALID_KEYS = [
+    "Admin-Key-9999",
+    "user-chvic0x1jy-DGC", "user-4tedl6oo4t-DGC", "user-m0d235slzm-DGC", "user-n83qv6uf6m-DGC",
+    "user-0y2ib88r0e-DGC", "user-2z8s4cf2kx-DGC", "user-frr90q0q4i-DGC", "user-jhnv8bgdq4-DGC",
+    "user-7d5nxvyo8m-DGC", "user-j6cc6mi5ki-DGC", "user-qvhd8xvff2-DGC", "user-bgbv7ihm0k-DGC",
+    "user-0yp1mu0kcc-DGC", "user-xai2ql5dzv-DGC", "user-btrkiw0bu3-DGC", "user-0sf6tr80tw-DGC",
+    "user-p7xbg65jg7-DGC", "user-h3nh8n9j9j-DGC", "user-4qlnb6aybt-DGC", "user-64xmvuhua3-DGC",
+    "user-vu4vq6fz2z-DGC", "user-cy01ktnn5z-DGC", "user-ox8lv32zo9-DGC", "user-vs23bne8hk-DGC",
+    "user-l5ghfzcnq1-DGC", "user-mq8v2xk7en-DGC", "user-dmujy77zo2-DGC", "user-4xplkt9kml-DGC",
+    "user-wz0fc1pccn-DGC", "user-5pxdwbzo0v-DGC", "user-pbm2z2fsqz-DGC", "user-q9oyc43hx1-DGC",
+    "user-bavt6k1gk3-DGC", "user-cdyos61bzt-DGC", "user-rnv00a97f3-DGC", "user-5e55smqlhw-DGC",
+    "user-60dx3c16ku-DGC", "user-d2esof5aa2-DGC", "user-uvfxoxll03-DGC", "user-k6b6js7bg4-DGC"
+  ];
+
+  let users = [];
+  let adminKeyUses = 0;
+
+  function enterChat() {
+    const key = document.getElementById('key').value.trim();
+    const username = document.getElementById('username').value.trim();
+
+    if (!VALID_KEYS.includes(key)) {
+      alert("Invalid key");
+      return;
+    }
+    if (!username) {
+      alert("Enter a username");
+      return;
+    }
+
+    localStorage.setItem("chatKey", key);
+    localStorage.setItem("chatUsername", username);
+
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('chatUI').style.display = 'flex';
+    addUser(username);
+
+    if (key === "Admin-Key-9999") {
+      adminKeyUses++;
+      if (adminKeyUses <= 10) {
+        document.getElementById('adminPanel').style.display = 'block';
+      } else {
+        alert("Admin-Key-9999 usage limit reached.");
+      }
+    }
+  }
+
+  function addUser(name) {
+    users.push(name);
+    updateUsers();
+  }
+
+  function updateUsers() {
+    document.getElementById("userCount").innerText = users.length;
+    const list = document.getElementById("usersList");
+    list.innerHTML = "";
+    users.forEach(u => {
+      const div = document.createElement("div");
+      div.className = "user";
+      div.innerText = u;
+      list.appendChild(div);
+    });
+  }
+
+  function sendMessage() {
+    const msgBox = document.getElementById("message");
+    const msg = msgBox.value.trim();
+    if (!msg) return;
+
+    const div = document.createElement("div");
+    div.textContent = `${localStorage.getItem("chatUsername")}: ${msg}`;
+    document.getElementById("messages").appendChild(div);
+    msgBox.value = "";
+    msgBox.focus();
+
+    const messagesDiv = document.getElementById("messages");
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }
+
+  document.getElementById("message").addEventListener("keypress", e => {
+    if (e.key === "Enter") sendMessage();
+  });
+
+  window.onload = () => {
+    const key = localStorage.getItem("chatKey");
+    const username = localStorage.getItem("chatUsername");
+    if (key && username && VALID_KEYS.includes(key)) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('chatUI').style.display = 'flex';
+      addUser(username);
+
+      if (key === "Admin-Key-9999" && adminKeyUses < 10) {
+        adminKeyUses++;
+        document.getElementById('adminPanel').style.display = 'block';
+      }
+    }
+  }
+</script>
+</body>
+</html>
