@@ -2,10 +2,11 @@ from flask import Flask, render_template, request, session, redirect, url_for
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import threading
 import time
+import os
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey123"  # keep sessions secure
-socketio = SocketIO(app, cors_allowed_origins="*")  # allow connections from frontend
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")  # allow connections from frontend
 
 # ----------------------------
 # in-memory storage
@@ -68,6 +69,9 @@ def handle_join(data):
     username = session.get("username")
     channel = data.get("channel", "general")
 
+    if username not in USERS:
+        return
+
     USERS[username]["sid"] = request.sid
     join_room(channel)
 
@@ -80,7 +84,7 @@ def handle_message(data):
     channel = data.get("channel", "general")
     message = data.get("message", "").strip()
 
-    if not message:
+    if not message or username not in USERS:
         return
 
     msg_data = {"user": username, "msg": message, "role": USERS[username]["role"]}
@@ -111,5 +115,6 @@ def handle_disconnect():
 # run app
 # ----------------------------
 if __name__ == "__main__":
-    print("[*] Starting chat server...")
-    socketio.run(app, host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))  # railway sets PORT automatically
+    print(f"[*] Starting chat server on port {port}...")
+    socketio.run(app, host="0.0.0.0", port=port, debug=False)
